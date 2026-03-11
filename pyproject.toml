@@ -8,15 +8,18 @@ authors = [
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "django-payments (>=3.1.0,<4.0.0)",
-    "requests (>=2.28.0,<3.0.0)",
-    "django (<5.3)"
+    "django-payments>=3.1.0,<4.0.0",
+    "requests>=2.28.0,<3.0.0",
+    "django<5.3",
 ]
 
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [{include = "payments_talo"}]
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^9.11.0"
