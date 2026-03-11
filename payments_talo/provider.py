@@ -53,10 +53,28 @@ class TaloProvider(BasicProvider):
             "Content-Type": "application/json",
         }
 
-    def get_form(self, payment, data=None):
+    def _post(self, path, payload):
         response = requests.post(
-            f"{self.base_url}/payments/",
-            json={
+            f"{self.base_url}{path}", json=payload, headers=self._headers()
+        )
+        if not response.ok:
+            raise PaymentError(
+                f"Talo API error: {response.status_code} {response.text}"
+            )
+        return response.json()
+
+    def _get(self, path):
+        response = requests.get(f"{self.base_url}{path}", headers=self._headers())
+        if not response.ok:
+            raise PaymentError(
+                f"Talo API error: {response.status_code} {response.text}"
+            )
+        return response.json()
+
+    def get_form(self, payment, data=None):
+        result = self._post(
+            "/payments/",
+            {
                 "user_id": self.user_id,
                 "price": {
                     "amount": str(payment.total),
@@ -67,13 +85,7 @@ class TaloProvider(BasicProvider):
                 "webhook_url": payment.get_process_url(),
                 "redirect_url": payment.get_success_url(),
             },
-            headers=self._headers(),
         )
-        if not response.ok:
-            raise PaymentError(
-                f"Talo API error: {response.status_code} {response.text}"
-            )
-        result = response.json()
         payment_data = result["data"]
         payment.transaction_id = payment_data["id"]
         payment.attrs = result
@@ -84,12 +96,7 @@ class TaloProvider(BasicProvider):
     def process_data(self, payment, request):
         body = json.loads(request.body)
         payment_id = body["paymentId"]
-        response = requests.get(
-            f"{self.base_url}/payments/{payment_id}",
-            headers=self._headers(),
-        )
-        response.raise_for_status()
-        result = response.json()
+        result = self._get(f"/payments/{payment_id}")
         talo_status = result["data"]["payment_status"]
         django_status = TALO_STATUS_MAP.get(talo_status, PaymentStatus.WAITING)
         payment.change_status(django_status)
@@ -106,15 +113,7 @@ class TaloProvider(BasicProvider):
                 "refund_type": refund_type,
                 "amount": f"{Decimal(str(amount)):.2f}",
             }
-        response = requests.post(
-            f"{self.base_url}/payments/{payment.transaction_id}/refunds",
-            json=payload,
-            headers=self._headers(),
-        )
-        if not response.ok:
-            raise PaymentError(
-                f"Talo refund error: {response.status_code} {response.text}"
-            )
+        self._post(f"/payments/{payment.transaction_id}/refunds", payload)
         payment.change_status(PaymentStatus.REFUNDED)
         payment.save()
         return Decimal(str(amount)) if amount else payment.total
