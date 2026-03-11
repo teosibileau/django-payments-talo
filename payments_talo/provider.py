@@ -34,15 +34,11 @@ class TaloProvider(BasicProvider):
     def _get_access_token(self):
         if self._token is not None:
             return self._token
-        response = requests.post(
-            f"{self.base_url}/users/{self.user_id}/tokens",
-            json={
-                "client_id": self.client_id,
-                "client_secret": self.client_secret,
-            },
+        data = self._post(
+            f"/users/{self.user_id}/tokens",
+            {"client_id": self.client_id, "client_secret": self.client_secret},
+            add_headers=False,
         )
-        response.raise_for_status()
-        data = response.json()
         self._token = data["data"]["token"]
         return self._token
 
@@ -53,9 +49,10 @@ class TaloProvider(BasicProvider):
             "Content-Type": "application/json",
         }
 
-    def _post(self, path, payload):
+    def _post(self, path, payload, add_headers=True):
+        headers = self._headers() if add_headers else {}
         response = requests.post(
-            f"{self.base_url}{path}", json=payload, headers=self._headers()
+            f"{self.base_url}{path}", json=payload, headers=headers
         )
         if not response.ok:
             raise PaymentError(

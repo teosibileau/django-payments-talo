@@ -220,6 +220,7 @@ class TestAccessToken:
                 "client_id": "test-client-id",
                 "client_secret": "test-client-secret",
             },
+            headers={},
         )
 
     @patch("payments_talo.provider.requests.post")
