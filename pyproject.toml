@@ -1,0 +1,17 @@
+[project]
+name = "django-payments-talo"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Teofilo Sibileau",email = "teo.sibileau@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "django-payments (>=3.1.0,<4.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
